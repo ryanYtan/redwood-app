@@ -10,3 +10,6 @@ export REDWOOD_IS_DEV="anything"
 export REDWOOD_SQLALCHEMY_DATABASE_URI="<DATABASE_CONNECTION_STRING>"
 export REDWOOD_SQLALCHEMY_TRACK_MODIFICATIONS="True" #or "False"
 ```
+
+## Building
+Building with `./build.sh`

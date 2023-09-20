@@ -7,7 +7,10 @@ RUN \
 RUN pip install -r requirements.txt
 
 #create instance folder
-COPY . .
+COPY app.py app.py
+COPY aws.py aws.py
+COPY models.py models.py
+COPY response.py response.py
 
 #arguments as env variables
 ARG ARG_REDWOOD_SECRET_KEY

@@ -14,7 +14,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS']    = os.getenv('REDWOOD_SQLALCHEMY_
 
 app.config['SECRET_KEY']    = os.getenv('REDWOOD_SECRET_KEY', 'dev')
 app.config['HOST']          = os.getenv('REDWOOD_HOST', '0.0.0.0')
-app.config['PORT']          = os.getenv('REDWOOD_PORT', 5000)
+app.config['PORT']          = os.getenv('REDWOOD_PORT', 8080)
 app.config['DEBUG']         = os.getenv('REDWOOD_DEBUG', True)
 
 #Devs will need to adapt their apps to use AWS credentials
@@ -23,8 +23,9 @@ if os.getenv('REDWOOD_IS_DEV') is None:
     region_name = 'ap-southeast-1'
 
     #Setting up AWS connection
-    db_endpoint_ssm_name = '/redwood/database/db_endpoint'
-    db_name_ssm_name = '/redwood/database/db_name'
+
+    db_endpoint_ssm_name = '/redwood/database/db_endpoint' #unfortunately this has to be hardcoded
+    db_name_ssm_name = '/redwood/database/db_name' #unfortunately this has to be hardcoded
     parameters = aws.get_ssm_param([
         db_endpoint_ssm_name,
         db_name_ssm_name,
@@ -39,6 +40,7 @@ if os.getenv('REDWOOD_IS_DEV') is None:
     db_password = db_login_credentials['password']
 
     uri = f'postgresql://{db_username}:{db_password}@{db_endpoint}/{db_name}'
+    print(uri)
     app.config['HOST'] = '0.0.0.0'
     app.config['SQLALCHEMY_DATABASE_URI'] = uri
 #END
@@ -169,8 +171,17 @@ def orders_for_user():
 
 
 if __name__ == '__main__':
-    app.run(
-        host=app.config['HOST'],
-        port=app.config['PORT'],
-        debug=app.config['DEBUG'],
-    )
+    if os.getenv('REDWOOD_IS_DEV') is None:
+        #prod
+        from waitress import serve
+        serve(
+            app,
+            host=app.config['HOST'],
+            port=app.config['PORT'],
+        )
+    else:
+        app.run(
+            host=app.config['HOST'],
+            port=app.config['PORT'],
+            debug=app.config['DEBUG'],
+        )
