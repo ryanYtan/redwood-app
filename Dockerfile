@@ -16,4 +16,6 @@ COPY response.py response.py
 ARG ARG_REDWOOD_SECRET_KEY
 ENV REDWOOD_SECRET_KEY ${ARG_REDWOOD_SECRET_KEY}
 
+EXPOSE 8080
+
 CMD [ "python3", "app.py" ]
