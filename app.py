@@ -104,6 +104,7 @@ def login():
     return Response(ResponseCode.SUCCESS).dict()
 
 
+@app.route('/', methods=['GET'])
 @app.route('/products', methods=['GET', 'POST'])
 def products():
     if request.method == 'GET':
