@@ -11,5 +11,9 @@ export REDWOOD_SQLALCHEMY_DATABASE_URI="<DATABASE_CONNECTION_STRING>"
 export REDWOOD_SQLALCHEMY_TRACK_MODIFICATIONS="True" #or "False"
 ```
 
-## Building
-Building with `./build.sh`
+## Building and Pushing to Docker Hub
+Ensure Docker is installed and run the two build scripts
+```
+./build.sh
+./push.sh
+```
