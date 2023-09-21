@@ -63,8 +63,11 @@ def index():
     return render_template("home.html"), 200
 
 
-@app.route('/signup', methods=['POST'])
+@app.route('/signup', methods=['GET', 'POST'])
 def signup():
+    if request.method == 'GET':
+        return render_template('signup.html'), 200
+
     data = request.json
 
     if 'username' not in data or 'password' not in data:
@@ -119,7 +122,7 @@ def products():
             .offset((page - 1) * page_count) \
             .limit(page_count) \
             .all()
-        return render_template('products.html'), 200
+        return render_template('products.html', items=unsold_items), 200
     else:
         username = session.get('username')
         if not username:

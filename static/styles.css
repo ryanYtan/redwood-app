@@ -11,6 +11,10 @@ main {
     padding-left: 25px;
 }
 
-.product-container {
-    margin-bottom: 10px;
+.card {
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
 }
