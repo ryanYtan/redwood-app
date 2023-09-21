@@ -6,11 +6,12 @@ RUN \
     apk add --no-cache --virtual .build-deps gcc musl-dev postgresql-dev
 RUN pip install -r requirements.txt
 
-#create instance folder
 COPY app.py app.py
 COPY aws.py aws.py
 COPY models.py models.py
 COPY response.py response.py
+COPY templates templates
+COPY static static
 
 #arguments as env variables
 ARG ARG_REDWOOD_SECRET_KEY

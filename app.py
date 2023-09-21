@@ -1,4 +1,4 @@
-from flask import Flask, request, session
+from flask import Flask, request, session, render_template
 from flask_session import Session
 from response import ResponseCode, Response
 from models import db, User, Item, Transaction
@@ -60,7 +60,7 @@ with app.app_context():
 
 @app.route('/', methods=['GET'])
 def index():
-    return 'ok'
+    return render_template("home.html"), 200
 
 
 @app.route('/signup', methods=['POST'])
@@ -119,7 +119,7 @@ def products():
             .offset((page - 1) * page_count) \
             .limit(page_count) \
             .all()
-        return Response(ResponseCode.SUCCESS, '', unsold_items).dict()
+        return render_template('products.html'), 200
     else:
         username = session.get('username')
         if not username:

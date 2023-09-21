@@ -1,0 +1,16 @@
+body {
+    padding-top: 5rem;
+}
+
+main {
+    padding: 3rem 1.5rem;
+    margin: 0 auto;
+}
+
+.navbar {
+    padding-left: 25px;
+}
+
+.product-container {
+    margin-bottom: 10px;
+}
