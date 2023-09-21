@@ -3,6 +3,7 @@ from flask_session import Session
 from response import ResponseCode, Response
 from models import db, User, Item, Transaction
 from uuid import uuid4
+from typing import *
 import aws
 import json
 import bcrypt
@@ -47,9 +48,11 @@ if os.getenv('REDWOOD_IS_DEV') is None:
 
 db.init_app(app)
 
+SESSION_KEY = 'redwood-sessionid'
+
 app.config['SESSION_TYPE'] = 'sqlalchemy'
 app.config['SESSION_SQLALCHEMY'] = db
-app.config['SESSION_COOKIE_NAME'] = 'redwood-sessionid'
+app.config['SESSION_COOKIE_NAME'] = SESSION_KEY
 app.config['SESSION_PERMANENT'] = True
 app.secret_key = app.config['SECRET_KEY']
 Session(app)
@@ -58,18 +61,82 @@ with app.app_context():
     db.create_all()
 
 
+"""
+Non-route functions
+"""
+def get_item_by_item_id(item_id: str) -> Optional[Item]:
+    return db.session.get(Item, { 'item_id': item_id })
+
+def get_unsold_items(page: int, page_count: int) -> List[Item]:
+    unsold_items = db.session.query(Item)  \
+        .filter(Item.item_id.not_in( db.session.query(Transaction.item_id) )) \
+        .offset((page - 1) * page_count) \
+        .limit(page_count) \
+        .all()
+    return unsold_items
+
+def get_bought_items_for_user() -> List[Item]:
+    if not is_user_logged_in():
+        return []
+    bought_items = db.session.query(Item) \
+        .join(Transaction, Transaction.item_id == Item.item_id) \
+        .filter(Transaction.buyer == session['username']) \
+        .all()
+    return bought_items
+
+def is_user_logged_in() -> bool:
+    return 'username' in session
+
+
+"""
+Front-end routes
+"""
 @app.route('/', methods=['GET'])
-def index():
-    return render_template("home.html"), 200
+@app.route('/home', methods=['GET'])
+def fe_index():
+    is_logged_in = is_user_logged_in()
+    return render_template("home.html", is_logged_in=is_logged_in), 200
 
+@app.route('/signup', methods=['GET'])
+def fe_signup():
+    is_logged_in = is_user_logged_in()
+    if is_logged_in:
+        return render_template('home.html', is_logged_in=is_logged_in), 200
+    return render_template('signup.html', is_logged_in=is_logged_in), 200
 
-@app.route('/signup', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET'])
+def fe_login():
+    is_logged_in = is_user_logged_in()
+    if is_logged_in:
+        return render_template('home.html', is_logged_in=is_logged_in), 200
+    return render_template('login.html', is_logged_in=is_logged_in), 200
+
+@app.route('/products', methods=['GET'])
+def fe_products():
+    is_logged_in = is_user_logged_in()
+    unsold_items = get_unsold_items(1, 999) #front-end pagination not implemented
+    return render_template('products.html', is_logged_in=is_logged_in, items=unsold_items), 200
+
+@app.route('/products/sell', methods=['GET'])
+def fe_products_sell():
+    is_logged_in = is_user_logged_in()
+    return render_template('products_sell.html', is_logged_in=is_logged_in), 200
+
+@app.route('/orders', methods=['GET'])
+def fe_orders():
+    is_logged_in = is_user_logged_in()
+    if is_logged_in:
+        bought_items = get_bought_items_for_user()
+        return render_template('orders.html', is_logged_in=is_logged_in, bought_items=bought_items), 200
+    return render_template('home.html', is_logged_in=is_logged_in), 200
+
+"""
+REST API
+Back-end routes
+"""
+@app.route('/api/signup', methods=['POST'])
 def signup():
-    if request.method == 'GET':
-        return render_template('signup.html'), 200
-
     data = request.json
-
     if 'username' not in data or 'password' not in data:
         return Response(ResponseCode.ERR_BAD_REQUEST, f'Required fields missing').dict()
 
@@ -88,10 +155,12 @@ def signup():
     db.session.add(user)
     db.session.commit()
 
+    session['username'] = username
+
     return Response(ResponseCode.SUCCESS).dict()
 
 
-@app.route('/login', methods=['POST'])
+@app.route('/api/login', methods=['POST'])
 def login():
     data = request.json
     username: str = data['username']
@@ -112,17 +181,21 @@ def login():
     return Response(ResponseCode.SUCCESS).dict()
 
 
-@app.route('/products', methods=['GET', 'POST'])
+@app.route('/api/logout', methods=['POST'])
+def logout():
+    if not is_user_logged_in():
+        return Response(ResponseCode.ERR_BAD_REQUEST, f'No user').dict()
+    session.clear()
+    return Response(ResponseCode.SUCCESS).dict()
+
+
+@app.route('/api/products', methods=['GET', 'POST'])
 def products():
     if request.method == 'GET':
         page_count = 25
         page = request.args.get('page', default=1, type=int)
-        unsold_items = db.session.query(Item)  \
-            .filter(Item.item_id.not_in( db.session.query(Transaction.item_id) )) \
-            .offset((page - 1) * page_count) \
-            .limit(page_count) \
-            .all()
-        return render_template('products.html', items=unsold_items), 200
+        unsold_items = get_unsold_items(page, page_count)
+        return Response(ResponseCode.SUCCESS, '', unsold_items).dict()
     else:
         username = session.get('username')
         if not username:
@@ -135,20 +208,26 @@ def products():
         item.description = data['description']
         item.imetadata = data['imetadata']
         item.price = data['price']
+
+        try:
+            _ = float(item.price)
+        except ValueError:
+            return Response(ResponseCode.ERR_BAD_REQUEST, f'Price {item.price} is not a valid number').dict()
+
         db.session.add(item)
         db.session.commit()
         return Response(ResponseCode.SUCCESS).dict()
 
 
-@app.route('/products/<item_id>')
+@app.route('/api/products/<item_id>')
 def get_product(item_id: str):
-    item = db.session.get(Item, { 'item_id': item_id })
+    item = get_item_by_item_id(item_id)
     if item is None:
         return Response(ResponseCode.ERR_NOT_FOUND, f'Item ID {item_id} does not exist')
     return Response(ResponseCode.SUCCESS, '', item).dict()
 
 
-@app.route('/products/<item_id>/buy', methods=['POST'])
+@app.route('/api/products/<item_id>/buy', methods=['POST'])
 def buy_product(item_id: str):
     buyer = session.get('username')
     if not buyer:
@@ -166,15 +245,12 @@ def buy_product(item_id: str):
     return Response(ResponseCode.SUCCESS).dict()
 
 
-@app.route('/orders')
+@app.route('/api/orders')
 def orders_for_user():
     username = session.get('username')
     if not username:
         return Response(ResponseCode.ERR_USER_UNLOGGED, f'Not logged in').dict()
-    bought_items = db.session.query(Item) \
-        .join(Transaction, Transaction.item_id == Item.item_id) \
-        .filter(Transaction.buyer == username) \
-        .all()
+    bought_items = get_bought_items_for_user()
     return Response(ResponseCode.SUCCESS, '', bought_items).dict()
 
 

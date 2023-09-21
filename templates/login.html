@@ -1,15 +1,15 @@
 {% extends "layout.html" %}
 
-{% block title %}Sign Up{% endblock %}
+{% block title %}Login{% endblock %}
 
-{% block id %}signup{% endblock %}
+{% block id %}login{% endblock %}
 
 {% block main %}
 <div class="container d-flex justify-content-center">
-  <h1>Sign Up</h1>
+  <h1>Login</h1>
 </div>
 <br>
-<div class="container d-flex justify-content-center">
+<div class="container d-flex justify-content-around">
 <form class="w-50">
   <div class="form-group">
     <label for="exampleInputEmail1">Username</label>
@@ -18,8 +18,9 @@
   <div class="form-group">
     <label for="exampleInputPassword1">Password</label>
     <input type="password" class="form-control" id="input-password" placeholder="Password">
+    <small class="form-text"><a href="/signup">I don't have an account</a></small>
   </div>
-  <div id="signup-submit" class="btn btn-primary">Sign Up</div>
+  <div id="login-submit" class="btn btn-primary">Login</div>
 </form>
 </div>
 {% endblock %}
@@ -29,11 +30,11 @@
 window.onload = function() {
   const $ = jQuery;
 
-  $("#signup-submit").on("click", function() {
+  $("#login-submit").on("click", function() {
     const username = $("#input-username").val()
     const password = $("#input-password").val()
     $.ajax({
-      url: "/api/signup",
+      url: "/api/login",
       type: "POST",
       dataType: 'json',
       data: JSON.stringify({

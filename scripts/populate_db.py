@@ -21,10 +21,10 @@ user_data = [
     ('gamecom', 'guhioefeiohe'),
 ]
 
-#for u, pw in user_data:
-#    data = { 'username': u, 'password': pw }
-#    res = requests.post('http://localhost:8080/signup', json=data)
-#    print(res.content)
+for u, pw in user_data:
+    data = { 'username': u, 'password': pw }
+    res = requests.post('http://localhost:8080/signup', json=data)
+    print(res.content)
 
 
 
@@ -54,9 +54,9 @@ data = [
     ('84A0CDA8-44F2-4D54-AF72-F38F409FC76A', 'sergeant_scully', 'Torrent', 'Elden Ring horse', '', 888),
 ]
 
-#for a, b, c, d, e, f in data:
-#    cur.execute('INSERT INTO item VALUES (%s, %s, %s, %s, %s, %s)', (a, b, c, d, e, f))
-#    conn.commit()
+for a, b, c, d, e, f in data:
+    cur.execute('INSERT INTO item VALUES (%s, %s, %s, %s, %s, %s)', (a, b, c, d, e, f))
+    conn.commit()
 
 data = [
     ('C8D570C1-6F99-41A0-945E-6AB0DE5FA40E', 'tanyu'),
@@ -83,6 +83,6 @@ data = [
     #('84A0CDA8-44F2-4D54-AF72-F38F409FC76A', ''),
 ]
 
-for a, b in data:
-    cur.execute('INSERT INTO transaction VALUES (%s, %s)', (b, a))
-    conn.commit()
+#for a, b in data:
+#    cur.execute('INSERT INTO transaction VALUES (%s, %s)', (b, a))
+#    conn.commit()

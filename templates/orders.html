@@ -1,23 +1,22 @@
 {% extends "layout.html" %}
 
-{% block title %}Products{% endblock %}
+{% block title %}Home{% endblock %}
 
 {% block id %}index{% endblock %}
 
 {% block main %}
 <div class="container d-flex justify-content-center">
-  <h1>Products</h1>
+  <h1>My Orders</h1>
 </div>
 <br>
 <div class="container">
-  {% for item in items -%}
+  {% for item in bought_items -%}
     <div class="card d-inline-flex">
       <div class="card-body">
         <h5 class="card-title">{{ item.name }}</h5>
         <p class="card-text"><em>Sold by: </em>{{ item.seller }}</p>
         <p class="card-text">{{ item.description }}</p>
-        <p class="card-text"><mark>${{ item.price }}</mark></p>
-        <button class="btn btn-sm btn-primary buy-button" value="{{ item.item_id }}">Buy</button>
+        <p class="card-text"><em>Bought at: </em><mark>${{ item.price }}</mark></p>
       </div>
     </div>
   {% endfor %}
