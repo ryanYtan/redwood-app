@@ -2,6 +2,7 @@ from flask import Flask, request, session
 from flask_session import Session
 from response import ResponseCode, Response
 from models import db, User, Item, Transaction
+from uuid import uuid4
 import aws
 import json
 import bcrypt
@@ -40,7 +41,6 @@ if os.getenv('REDWOOD_IS_DEV') is None:
     db_password = db_login_credentials['password']
 
     uri = f'postgresql://{db_username}:{db_password}@{db_endpoint}/{db_name}'
-    print(uri)
     app.config['HOST'] = '0.0.0.0'
     app.config['SQLALCHEMY_DATABASE_URI'] = uri
 #END
@@ -56,6 +56,11 @@ Session(app)
 
 with app.app_context():
     db.create_all()
+
+
+@app.route('/', methods=['GET'])
+def index():
+    return 'ok'
 
 
 @app.route('/signup', methods=['POST'])
@@ -104,7 +109,6 @@ def login():
     return Response(ResponseCode.SUCCESS).dict()
 
 
-@app.route('/', methods=['GET'])
 @app.route('/products', methods=['GET', 'POST'])
 def products():
     if request.method == 'GET':
